@@ -43,14 +43,15 @@ jobs:
         TOTAL_COUNT=$(jq 'length' data/medicines.json)
         CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
         
-        cat > data/summary.json << EOF
-{
-  "last_updated": "$CURRENT_DATE",
-  "total_medicines": $TOTAL_COUNT,
-  "source": "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/",
-  "description": "Veterinary medicines registered in Latvia - extracted medicine names only"
-}
-EOF
+        jq -n \
+          --arg date "$CURRENT_DATE" \
+          --argjson count "$TOTAL_COUNT" \
+          '{
+            "last_updated": $date,
+            "total_medicines": $count,
+            "source": "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/",
+            "description": "Veterinary medicines registered in Latvia - extracted medicine names only"
+          }' > data/summary.json
         
         # Clean up temporary files
         rm -f medicines.zip vz-dati.json
