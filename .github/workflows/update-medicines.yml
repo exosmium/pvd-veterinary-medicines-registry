@@ -21,7 +21,7 @@ jobs:
         
         # Download the ZIP file
         echo "Downloading veterinary medicines data..."
-        curl -L -o medicines.zip "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/"
+        curl -k -L -o medicines.zip "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/"
         
         # Unzip the file
         echo "Extracting ZIP file..."
