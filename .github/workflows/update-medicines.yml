@@ -37,9 +37,9 @@ jobs:
           exit 1
         fi
         
-        # Extract medicine names and create new JSON
+        # Extract medicine names and create new JSON array (deduplicated)
         echo "Processing medicine names..."
-        jq '[.[] | {name: .OriginalaisNosaukums}]' vz-dati.json > data/medicines.json
+        jq '[.[] | .OriginalaisNosaukums] | unique' vz-dati.json > data/medicines.json
         
         # Create a summary file with metadata
         echo "Creating summary..."
