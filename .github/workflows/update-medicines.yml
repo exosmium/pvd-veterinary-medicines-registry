@@ -1,0 +1,73 @@
+name: Update Veterinary Medicines Registry
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-registry:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Download and process medicines data
+      run: |
+        # Create data directory if it doesn't exist
+        mkdir -p data
+        
+        # Download the ZIP file
+        echo "Downloading veterinary medicines data..."
+        curl -L -o medicines.zip "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/"
+        
+        # Unzip the file
+        echo "Extracting ZIP file..."
+        unzip -o medicines.zip
+        
+        # Check if vz-dati.json exists
+        if [ ! -f "vz-dati.json" ]; then
+          echo "Error: vz-dati.json not found in the ZIP file"
+          ls -la
+          exit 1
+        fi
+        
+        # Extract medicine names and create new JSON
+        echo "Processing medicine names..."
+        jq '[.[] | {name: .OriginalaisNosaukums}]' vz-dati.json > data/medicines.json
+        
+        # Create a summary file with metadata
+        echo "Creating summary..."
+        TOTAL_COUNT=$(jq 'length' data/medicines.json)
+        CURRENT_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        
+        cat > data/summary.json << EOF
+{
+  "last_updated": "$CURRENT_DATE",
+  "total_medicines": $TOTAL_COUNT,
+  "source": "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/",
+  "description": "Veterinary medicines registered in Latvia - extracted medicine names only"
+}
+EOF
+        
+        # Clean up temporary files
+        rm -f medicines.zip vz-dati.json
+        
+        echo "Processing complete. Found $TOTAL_COUNT medicines."
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Check if there are changes
+        if [ -n "$(git status --porcelain)" ]; then
+          git add data/
+          git commit -m "Update veterinary medicines registry - $(date -u +"%Y-%m-%d")"
+          git push
+          echo "Changes committed and pushed."
+        else
+          echo "No changes to commit."
+        fi 
