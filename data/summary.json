@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-06-24 03:13:51 UTC",
+  "last_updated": "2025-06-25 03:14:53 UTC",
   "total_medicines": 1236,
   "source": "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/",
   "description": "Veterinary medicines registered in Latvia - extracted medicine names only"
