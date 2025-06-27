@@ -22,11 +22,12 @@ jobs:
         # Create data directory if it doesn't exist
         mkdir -p data
         
-        # Download the ZIP file
+        # Download the ZIP file. The -k flag disables SSL certificate validation,
+        # which may be necessary if the source has an invalid/self-signed certificate.
         echo "Downloading veterinary medicines data..."
         curl -k -L -o medicines.zip "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/"
         
-        # Unzip the file
+        # Unzip the file, overwriting existing files
         echo "Extracting ZIP file..."
         unzip -o medicines.zip
         
@@ -37,9 +38,9 @@ jobs:
           exit 1
         fi
         
-        # Extract medicine names and create new JSON array (deduplicated)
+        # Extract medicine names, trim whitespace, filter out empty names, and deduplicate
         echo "Processing medicine names..."
-        jq '[.[] | .OriginalaisNosaukums] | unique' vz-dati.json > data/medicines.json
+        jq '[.[] | .OriginalaisNosaukums | gsub("^\\s+|\\s+$"; "") | select(. != "")] | unique' vz-dati.json > data/medicines.json
         
         # Create a summary file with metadata
         echo "Creating summary..."
@@ -53,25 +54,25 @@ jobs:
             "last_updated": $date,
             "total_medicines": $count,
             "source": "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/",
-            "description": "Veterinary medicines registered in Latvia - extracted medicine names only"
+            "description": "Deduplicated and trimmed list of veterinary medicine names registered in Latvia."
           }' > data/summary.json
         
         # Clean up temporary files
         rm -f medicines.zip vz-dati.json
         
-        echo "Processing complete. Found $TOTAL_COUNT medicines."
+        echo "Processing complete. Found $TOTAL_COUNT unique medicines."
         
     - name: Commit and push changes
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # Check if there are changes
-        if [ -n "$(git status --porcelain)" ]; then
+        # Check if there are changes to the data directory
+        if [ -n "$(git status --porcelain data/)" ]; then
           git add data/
           git commit -m "Update veterinary medicines registry - $(date -u +"%Y-%m-%d")"
           git push
           echo "Changes committed and pushed."
         else
           echo "No changes to commit."
-        fi 
+        fi
