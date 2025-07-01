@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-06-30 03:20:06 UTC",
+  "last_updated": "2025-07-01 03:24:56 UTC",
   "total_medicines": 1225,
   "source": "https://registri.pvd.gov.lv/open-data/download?register=vz&type=json&ver=1/",
   "description": "Deduplicated and trimmed list of veterinary medicine names registered in Latvia."
